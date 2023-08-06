@@ -18,6 +18,7 @@
             nodePackages.typescript-language-server
             nodePackages.svelte-language-server
             nodePackages.eslint
+            nodePackages.prettier
           ];
         };
       });
