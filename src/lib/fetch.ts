@@ -22,7 +22,7 @@ export async function fetchProtected(input: RequestInfo | URL, init?: RequestIni
 	return fetch(input, theInit);
 }
 
-async function tryFetchAndSetNewAccessToken() {
+export async function tryFetchAndSetNewAccessToken() {
 	const response = await fetch(`${host}/api/sessions`, {
 		method: 'PUT'
 	});
