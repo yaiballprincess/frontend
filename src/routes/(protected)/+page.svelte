@@ -1,7 +1,21 @@
 <script lang="ts">
-  export let data;
-  console.log(data);
+	import Rule from '$lib/components/Rule.svelte';
+	export let data;
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<main class="container">
+	<section class="kb-cards">
+		{#each Object.entries(data.rules) as [id, rule]}
+			<Rule {rule} />
+		{/each}
+	</section>
+</main>
+
+<style>
+	.kb-cards {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		grid-auto-rows: auto;
+		grid-gap: 1rem;
+	}
+</style>
