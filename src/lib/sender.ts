@@ -11,7 +11,7 @@ export type Sender = {
 	receivers: { [id: number]: { peerId: number; name: string } } | undefined;
 };
 
-const senders: Store<{ [id: number]: Sender }> = store({});
+export const senders: Store<{ [id: number]: Sender }> = store({});
 
 export async function refreshSenders() {
 	const response = await fetchProtectedOrGoto('/api/senders');
@@ -53,7 +53,7 @@ export async function refreshSender(senderId: number) {
 }
 
 export async function getSender(senderId: number) {
-	if (!(senderId in senders)) {
+	if (!(senderId in senders.get())) {
 		await refreshSenders();
 	}
 	if (senders.get()[senderId].receivers === undefined) {
