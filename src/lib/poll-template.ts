@@ -8,12 +8,12 @@ export type PollTemplate = {
 	isAnonymous: boolean;
 	isMultiple: boolean;
 	question: string;
-	options: [{ id: number; value: string }];
+	options: string[];
 };
 
-const pollTemplates: Store<{ [id: number]: PollTemplate }> = store({});
+export const pollTemplates: Store<{ [id: number]: PollTemplate }> = store({});
 
-async function refreshPollTemplates() {
+export async function refreshPollTemplates() {
 	const response = await fetchProtectedOrGoto('/api/poll-templates');
 	if (!response?.ok) {
 		return;
@@ -40,4 +40,50 @@ export async function getPollTemplate(id: number) {
 		await refreshPollTemplates();
 	}
 	return pollTemplates.get()[id];
+}
+
+export async function updatePollTemplate(pt: PollTemplate) {
+	const response = await fetchProtectedOrGoto(`/api/poll-templates/${pt.id}`, {
+		method: 'PUT',
+		body: JSON.stringify(pt)
+	});
+	if (response.ok) {
+		pollTemplates.update((s) => {
+			s[pt.id] = pt;
+			return s;
+		});
+	} else {
+		return await response.json();
+	}
+}
+
+export async function insertPollTemplate(pt: PollTemplate) {
+	const response = await fetchProtectedOrGoto('/api/poll-templates', {
+		method: 'POST',
+		body: JSON.stringify(pt)
+	});
+	if (response.ok) {
+		const id = await response.json();
+		pt.id = id;
+		pollTemplates.update((s) => {
+			s[pt.id] = pt;
+			return s;
+		});
+	} else {
+		return await response.json();
+	}
+}
+
+export async function deletePollTemplate(id: number) {
+	const response = await fetchProtectedOrGoto(`/api/poll-templates/${id}`, {
+		method: 'DELETE'
+	});
+	if (response.ok) {
+		pollTemplates.update((s) => {
+			s.delete(id);
+			return s;
+		});
+	} else {
+		return await response.json();
+	}
 }
