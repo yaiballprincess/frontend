@@ -21,7 +21,7 @@ export async function refreshPollTemplates() {
 	const data = await response.json();
 	for (const pollTemplate of data) {
 		const prepared = {
-			endsAt: pollTemplate.endsAt !== undefined ? new Date(pollTemplate.endsAt) : undefined,
+			endsAt: pollTemplate.endsAt ? new Date(pollTemplate.endsAt) : undefined,
 			id: pollTemplate.id,
 			isAnonymous: pollTemplate.isAnonymous,
 			isMultiple: pollTemplate.isMultiple,
