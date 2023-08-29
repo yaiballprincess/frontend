@@ -1,5 +1,7 @@
 <script lang="ts">
 	import * as ptapi from '$lib/poll-template';
+	import { memento } from '$lib/memento.ts';
+	import DateTimeInput from '$lib/components/DateTimeInput.svelte';
 	export let state: 'view' | 'edit';
 	export let data: {
 		id: number | undefined;
@@ -9,21 +11,23 @@
 		isAnonymous: boolean;
 		endsAt?: Date;
 	};
-	export let onCreation;
-	let endsAt: string = '';
-	$: data.endsAt = endsAt ? new Date(endsAt) : undefined;
+	export let onCreation = undefined;
+
+	$: mem = memento(data);
 
 	const createOrUpdate = async () => {
-		if (data.id === undefined) {
-			const maybeError = await ptapi.insertPollTemplate(data);
-			if (maybeError === undefined) {
-				onCreation();
-			}
-		} else {
-			const maybeError = await ptapi.updatePollTemplate(data);
-			if (maybeError !== undefined) {
-				// TODO: handle error
-			}
+		let isNew = $mem.current.id === undefined;
+		const maybeError = await (isNew
+			? ptapi.insertPollTemplate($mem.current)
+			: ptapi.updatePollTemplate($mem.current));
+		if (maybeError !== undefined) {
+			// TODO: error handling
+			return;
+		}
+		mem.commit();
+		state = isNew ? 'edit' : 'view';
+		if (isNew && onCreation) {
+			onCreation();
 		}
 	};
 
@@ -32,56 +36,66 @@
 			state = 'edit';
 		} else {
 			await createOrUpdate();
-			state = 'view';
 		}
 	};
 
+	const onCancelEdit = () => {
+		mem.rollback();
+		state = 'view';
+	};
+
 	const deletePollTemplate = async () => {
-		const maybeError = await ptapi.deletePollTemplate(data.id);
+		const maybeError = await ptapi.deletePollTemplate($mem.current.id);
 		// TODO: handle error
 	};
 
 	const removeOption = (index) => {
-		data.options.splice(index, 1);
-		data.options = data.options;
+		$mem.current.options.splice(index, 1);
+		$mem.current.options = $mem.current.options;
 	};
 
 	const addOption = () => {
-		data.options = [...data.options, ''];
+		$mem.current.options = [...$mem.current.options, ''];
 	};
 </script>
 
 <article>
 	<header>
 		<h5>
-			<input bind:value={data.question} placeholder="Question" disabled={state === 'view'} />
+			<input
+				bind:value={$mem.current.question}
+				placeholder="Question"
+				disabled={state === 'view'}
+			/>
 		</h5>
 		<button on:click={onModeChange}>{state === 'view' ? 'edit' : 'save'}</button>
 		{#if state === 'edit' && data.id !== undefined}
-			<span on:click={deletePollTemplate}>❌</span>
+			<span on:click={onCancelEdit}>❌</span>
+		{:else if data.id !== undefined}
+			<button on:click={deletePollTemplate}>del</button>
 		{/if}
 	</header>
 	<div>
 		<label>
 			Multiple:
-			<input type="checkbox" bind:checked={data.isMultiple} disabled={state === 'view'} />
+			<input type="checkbox" bind:checked={$mem.current.isMultiple} disabled={state === 'view'} />
 		</label>
 	</div>
 	<div>
 		<label>
 			Anonymous:
-			<input type="checkbox" bind:checked={data.isAnonymous} disabled={state === 'view'} />
+			<input type="checkbox" bind:checked={$mem.current.isAnonymous} disabled={state === 'view'} />
 		</label>
 	</div>
 	<div>
 		<label>
 			Ends at:
-			<input type="datetime-local" bind:value={endsAt} disabled={state === 'view'} />
+			<DateTimeInput bind:value={$mem.current.endsAt} disabled={state === 'view'} />
 		</label>
 	</div>
 
 	<ul>
-		{#each data.options as opt, index}
+		{#each $mem.current.options as opt, index}
 			<li>
 				<input
 					type="text"
@@ -90,7 +104,9 @@
 					pattern={String.raw`.{1,}`}
 					required
 				/>
-				<span on:click={() => removeOption(index)}>❌</span>
+				{#if state == 'edit'}
+					<span on:click={() => removeOption(index)}>❌</span>
+				{/if}
 			</li>
 		{/each}
 		{#if state === 'edit'}<button on:click={addOption}>add</button>{/if}
