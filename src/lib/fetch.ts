@@ -32,6 +32,9 @@ async function genericFetchProtected(
 	}
 	const headers = new Headers(init?.headers);
 	headers.append('Authorization', `Bearer ${accessToken.get()}`);
+	if (headers.get('Content-Type') === null) {
+		headers.append('Content-Type', 'application/json');
+	}
 	const theInit = init ?? {};
 	theInit.headers = headers;
 	return fetch(input, theInit);
