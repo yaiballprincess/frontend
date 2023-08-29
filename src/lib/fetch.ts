@@ -65,7 +65,7 @@ function isValidAccessToken(value: string) {
 		}
 		const thatTime = new Date(data.exp * 1000).getTime();
 		const curTime = new Date().getTime();
-        return curTime < thatTime;
+		return curTime < thatTime;
 	} catch (_) {
 		return false;
 	}
