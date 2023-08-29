@@ -80,7 +80,7 @@ export async function deletePollTemplate(id: number) {
 	});
 	if (response.ok) {
 		pollTemplates.update((s) => {
-			s.delete(id);
+			delete s[id];
 			return s;
 		});
 	} else {
