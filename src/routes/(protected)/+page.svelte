@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Rule from '$lib/components/Rule.svelte';
 	import PollTemplate from '$lib/components/PollTemplate.svelte';
+    import Sender from '$lib/components/Sender.svelte';
+    import AddSender from '$lib/components/AddSender.svelte';
 	import { pollTemplates } from '$lib/poll-template';
 	import { senders } from '$lib/sender';
 	import { store } from '$lib/store';
@@ -34,11 +36,12 @@
 		<h1>Senders</h1>
 		<div class="kb-cards">
 			{#each Object.entries($senders) as [id, sender]}
-				<div>{id}</div>
+				<Sender data={sender} />
 			{/each}
+            <AddSender />
 		</div>
 	</section>
-
+    <!--
 	<section id="rules">
 		<h1>Rules</h1>
 		<div class="kb-cards">
@@ -46,7 +49,7 @@
 				<Rule {rule} />
 			{/each}
 		</div>
-	</section>
+	</section> -->
 </main>
 
 <style>
