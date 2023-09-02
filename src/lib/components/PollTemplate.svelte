@@ -123,13 +123,13 @@
 	article header h5 {
 		display: inline;
 	}
-    article header h5 input:disabled {
+	article header h5 input:disabled {
 		border: none;
 		font-size: 1rem;
 		font-weight: 600;
 	}
-    ul li input {
-        border: none;
-        font-size: 1rem;
-    }
+	ul li input {
+		border: none;
+		font-size: 1rem;
+	}
 </style>

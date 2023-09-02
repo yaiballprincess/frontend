@@ -1,3 +1,7 @@
+import { store } from '$lib/store';
+import type { Store } from '$lib/store';
+import { fetchProtectedOrGoto } from '$lib/fetch';
+
 export type Rule = {
 	id: number;
 	isActive: boolean;
@@ -18,34 +22,31 @@ export type RegularRule = {
 export type IgnoreRule = {
 	type: 'ignore';
 	regularRuleId: number;
-	regularRule: RegularRule;
-	sendAt: Date;
+	startsAt: Date;
+	endsAt: Date;
 };
 
 export type ReplaceRule = {
 	type: 'replace';
 	regularRuleId: number;
-	regularRule: RegularRule;
 	newPollTemplateId: number;
-	sendAt: Date;
+	startsAt: Date;
+	endsAt: Date;
 };
 
-export function processRules(rules: any[]): { [id: number]: Rule } {
-	const regularRules: { [id: number]: RegularRule } = {};
-	for (const rule of rules) {
-		if ('regular' in rule.metadata) {
-			regularRules[rule.id] = { ...rule.metadata.regular, type: 'regular' } as RegularRule;
-		}
-	}
+export const rules: Store<{ [id: number]: Rule }> = store({});
 
+export async function refreshRules() {
+	const response = await fetchProtectedOrGoto('/api/rules');
+	const data = await response.json();
 	const ret: { [id: number]: Rule } = {};
 
-	for (const rule of rules) {
+	for (const rule of data) {
 		if ('regular' in rule.metadata) {
 			ret[rule.id] = {
 				id: rule.id,
 				isActive: rule.isActive,
-				metadata: regularRules[rule.id]
+				metadata: { ...rule.metadata.regular, type: 'regular' }
 			} satisfies Rule;
 		} else if ('ignore' in rule.metadata) {
 			const m = rule.metadata.ignore;
@@ -55,8 +56,8 @@ export function processRules(rules: any[]): { [id: number]: Rule } {
 				metadata: {
 					type: 'ignore',
 					regularRuleId: m.regularRuleId as number,
-					regularRule: regularRules[m.regularRuleId],
-					sendAt: new Date(m.sendAt)
+					startsAt: new Date(m.startsAt),
+					endsAt: new Date(m.endsAt)
 				} satisfies IgnoreRule
 			} satisfies Rule;
 		} else if ('replace' in rule.metadata) {
@@ -67,13 +68,39 @@ export function processRules(rules: any[]): { [id: number]: Rule } {
 				metadata: {
 					type: 'replace',
 					regularRuleId: m.regularRuleId as number,
-					regularRule: regularRules[m.regularRuleId],
 					newPollTemplateId: m.newPollTemplateId as number,
-					sendAt: new Date(m.sendAt)
+					startsAt: new Date(m.startsAt),
+					endsAt: new Date(m.endsAt)
 				} satisfies ReplaceRule
 			} satisfies Rule;
 		}
 	}
+	rules.set(ret);
+}
 
-	return ret;
+export async function deleteRule(id: number) {
+	const response = await fetchProtectedOrGoto(`/api/rules/${id}`, { method: 'DELETE' });
+	if (!response.ok) {
+		return await response.json();
+	}
+}
+
+export async function updateRule(id: number, payload) {
+	const response = await fetchProtectedOrGoto(`/api/rules/${id}`, {
+		method: 'PUT',
+		body: JSON.stringify(payload)
+	});
+	if (!response.ok) {
+		return await response.json();
+	}
+}
+
+export async function addRule(payload) {
+	const response = await fetchProtectedOrGoto(`/api/rules`, {
+		method: 'POST',
+		body: JSON.stringify(payload)
+	});
+	if (!response.ok) {
+		return await response.json();
+	}
 }

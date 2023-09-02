@@ -1,13 +1,36 @@
 <script lang="ts">
 	import Rule from '$lib/components/Rule.svelte';
 	import PollTemplate from '$lib/components/PollTemplate.svelte';
-    import Sender from '$lib/components/Sender.svelte';
-    import AddSender from '$lib/components/AddSender.svelte';
+	import Sender from '$lib/components/Sender.svelte';
+	import AddSender from '$lib/components/AddSender.svelte';
+	import { rules, refreshRules } from '$lib/rule';
 	import { pollTemplates } from '$lib/poll-template';
 	import { senders } from '$lib/sender';
 	import { store } from '$lib/store';
 	import { onMount } from 'svelte';
-	export let data;
+
+	let newRules = {};
+	let newRuleIdx = 0;
+
+	function addNewRule(ruleType) {
+		newRules[newRuleIdx] = {
+			isActive: true,
+			metadata: {
+				type: ruleType
+			}
+		};
+		newRules = newRules;
+
+		newRuleIdx += 1;
+	}
+
+	function onCreationFactory(id) {
+		return async () => {
+			const tmp = Object.entries(newRules).filter(([k, _]) => k !== id);
+			newRules = Object.fromEntries(tmp);
+			await refreshRules();
+		};
+	}
 
 	let newPollTemplate;
 	function resetNewPollTemplate() {
@@ -38,18 +61,26 @@
 			{#each Object.entries($senders) as [id, sender]}
 				<Sender data={sender} />
 			{/each}
-            <AddSender />
+			<AddSender />
 		</div>
 	</section>
-    <!--
+
 	<section id="rules">
 		<h1>Rules</h1>
 		<div class="kb-cards">
-			{#each Object.entries(data.rules) as [id, rule]}
+			{#each Object.entries($rules) as [id, rule]}
 				<Rule {rule} />
 			{/each}
+			{#each Object.entries(newRules) as [id, newRule]}
+				<Rule rule={newRule} onCreation={onCreationFactory(id)} state="edit" />
+			{/each}
+			<article id="new-rules">
+				<button on:click={() => addNewRule('regular')}>Add regular rule</button>
+				<button on:click={() => addNewRule('ignore')}>Add ignore rule</button>
+				<button on:click={() => addNewRule('replace')}>Add replace rule</button>
+			</article>
 		</div>
-	</section> -->
+	</section>
 </main>
 
 <style>
@@ -62,5 +93,11 @@
 		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 		grid-auto-rows: auto;
 		grid-gap: 1rem;
+	}
+
+	#new-rules button {
+		display: block;
+		margin: 1rem auto;
+		height: 2.5rem;
 	}
 </style>
