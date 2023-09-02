@@ -3,7 +3,6 @@
 	const padNumber = (n) => n.toString().padStart(2, '0');
 
 	const formatToDateTimeLocal = (d) => {
-		console.log(d);
 		return d !== undefined
 			? `${d.getFullYear()}-${padNumber(d.getMonth() + 1)}-${padNumber(d.getDate())}T${padNumber(
 					d.getHours()
